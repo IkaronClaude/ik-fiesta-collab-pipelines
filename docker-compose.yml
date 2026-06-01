@@ -1,17 +1,15 @@
-# Fiesta Online server stack -- Linux containers (Wine runtime), bridge
-# networking, packet-rewriting proxy.
-#
-# Mirror of ../windows/docker-compose.yml with Linux paths and image
-# variants. See ../windows/docker-compose.yml for the prose explanation of
-# the topology; this file is otherwise structurally identical.
+# Full Fiesta Online server stack (Linux containers): SQL + 4 DB bridges +
+# Login + WorldManager + 5 zones + packet-rewriting proxy, plus the web tier
+# (api, webapp, patch-server). Deployed by .github/workflows/deploy.yml, or run
+# by hand. All images default to published tags (Docker Hub ikaronclaude/fiesta-*
+# and GHCR ik-fiesta-*); override any with the *_IMAGE vars in .env.
 #
 # Prereqs:
-#   * Docker on Linux (or Docker Desktop with Linux-containers default).
-#   * Built images: fiesta-server-runtime:latest (Dockerfile.linux),
-#     fiesta-sql-runtime:latest (Dockerfile.sql.linux),
-#     fiesta-proxy:latest (lib/fiesta-proxy/Dockerfile).
-#   * .env next to this file (copy .env.example).
-#   * Your ServerSource tree pointed to by FIESTA_SERVER in .env.
+#   * Docker (Linux engine).
+#   * .env next to this file (copy .env.example), with FIESTA_SERVER, PUBLIC_IP,
+#     SA_PASSWORD, JWT_SECRET set.
+#   * Your ServerSource tree (BYO exes + Databases/*.bak) at FIESTA_SERVER, with
+#     9Data refreshed by `fiesta build` (the pipeline does this for you).
 #
 # Then:
 #   docker compose up -d
@@ -287,7 +285,7 @@ services:
       zone03:       { condition: service_started }
       zone04:       { condition: service_started }
 
-  # --- Web tier (the Mimir/ik-fiesta-collab ecosystem split-outs) ---
+  # --- Web tier (the ik-fiesta-collab ecosystem split-outs) ---
 
   # Account/player REST API (ik-fiesta-api). Talks straight to the game DBs.
   api:

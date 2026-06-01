@@ -15,7 +15,7 @@ on:
     branches: [ main ]
 
 env:
-  # Which environment in your fiesta project to build (mimir.json env name).
+  # Which environment in your fiesta project to build (fiesta.json env name).
   FIESTA_ENV: ${{ vars.FIESTA_ENV || 'server' }}
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
 
       # Turn the git-tracked JSON tables into SHN/txt with the fiesta toolkit.
       # The image is published by ik-fiesta-collab's CI. content/ is your project
-      # (where mimir.json lives); build output lands in content/build/<env>/.
+      # (where fiesta.json lives); build output lands in content/build/<env>/.
       - name: Build content (JSON -> SHN/txt)
         run: |
           docker run --rm -v "${{ github.workspace }}/content:/project" \

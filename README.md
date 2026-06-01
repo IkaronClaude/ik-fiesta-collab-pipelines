@@ -26,7 +26,7 @@ exes/DBs.
 `.github/workflows/deploy.yml` runs two jobs:
 
 1. **build-content** — `docker run … ik-fiesta-collab build --env <env>` against
-   `content/` (your `fiesta`/Mimir project, where `mimir.json` lives), producing
+   `content/` (your `fiesta` project, where `fiesta.json` lives), producing
    the server SHN/txt under `content/build/<env>/`, uploaded as an artifact.
 2. **deploy** — over SSH: copy `docker-compose.yml` + the built data to the host,
    unpack the data into the host's `ServerSource/9Data`, write `.env` from your
