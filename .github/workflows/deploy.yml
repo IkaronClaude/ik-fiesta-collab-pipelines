@@ -30,7 +30,7 @@ jobs:
       - name: Build content (JSON -> SHN/txt)
         run: |
           docker run --rm -v "${{ github.workspace }}/content:/project" \
-            ghcr.io/${{ github.repository_owner }}/ik-fiesta-collab:latest \
+            ghcr.io/ikaronclaude/ik-fiesta-collab:latest \
             build --env "$FIESTA_ENV"
 
       # Package the built data. Adjust the source path to your project's build
