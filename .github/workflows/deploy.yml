@@ -46,6 +46,18 @@ jobs:
   deploy:
     needs: build-content
     runs-on: ubuntu-latest
+    # Secrets/vars are exposed as env vars so the shell expands them — no inline
+    # ${{ secrets.* }} inside run: scripts (avoids shell-injection + log leaks).
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      FIESTA_SERVER: ${{ secrets.FIESTA_SERVER }}
+      PUBLIC_IP: ${{ secrets.PUBLIC_IP }}
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      API_URL: ${{ vars.API_URL }}
+      CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -53,41 +65,38 @@ jobs:
           name: content-build
 
       - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Ship compose + content to the host
         run: |
-          SSH="ssh -i ~/.ssh/id_deploy ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          SCP="scp -i ~/.ssh/id_deploy"
-          DEST='${{ secrets.DEPLOY_PATH }}'
-          $SSH "mkdir -p '$DEST'"
-          $SCP docker-compose.yml content-build.tar.gz "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$DEST/"
-          # Unpack the freshly built data into the host's ServerSource/9Data.
-          # (The host supplies the BYO exes; this refreshes the game data.)
-          $SSH "mkdir -p '${{ secrets.FIESTA_SERVER }}/9Data' && tar -xzf '$DEST/content-build.tar.gz' -C '${{ secrets.FIESTA_SERVER }}/9Data'"
+          REMOTE="$SSH_USER@$SSH_HOST"
+          ssh -i ~/.ssh/id_deploy "$REMOTE" "mkdir -p '$DEPLOY_PATH'"
+          scp -i ~/.ssh/id_deploy docker-compose.yml content-build.tar.gz "$REMOTE:$DEPLOY_PATH/"
+          # Unpack the freshly built data into the host's ServerSource/9Data
+          # (the host supplies the BYO exes; this just refreshes the game data).
+          ssh -i ~/.ssh/id_deploy "$REMOTE" "mkdir -p '$FIESTA_SERVER/9Data' && tar -xzf '$DEPLOY_PATH/content-build.tar.gz' -C '$FIESTA_SERVER/9Data'"
 
-      - name: Write .env from secrets
+      - name: Write .env on the host
         run: |
-          SSH="ssh -i ~/.ssh/id_deploy ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          DEST='${{ secrets.DEPLOY_PATH }}'
-          $SSH "cat > '$DEST/.env'" <<EOF
-          COMPOSE_PROFILES=bundled-sql
-          FIESTA_SERVER=${{ secrets.FIESTA_SERVER }}
-          PUBLIC_IP=${{ secrets.PUBLIC_IP }}
-          SA_PASSWORD=${{ secrets.SA_PASSWORD }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          API_URL=${{ vars.API_URL }}
-          CORS_ORIGINS=${{ vars.CORS_ORIGINS }}
-          EOF
+          umask 077
+          {
+            printf '%s\n' "COMPOSE_PROFILES=bundled-sql"
+            printf '%s\n' "FIESTA_SERVER=$FIESTA_SERVER"
+            printf '%s\n' "PUBLIC_IP=$PUBLIC_IP"
+            printf '%s\n' "SA_PASSWORD=$SA_PASSWORD"
+            printf '%s\n' "JWT_SECRET=$JWT_SECRET"
+            printf '%s\n' "API_URL=$API_URL"
+            printf '%s\n' "CORS_ORIGINS=$CORS_ORIGINS"
+          } | ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "cat > '$DEPLOY_PATH/.env'"
 
       - name: Deploy
         run: |
-          SSH="ssh -i ~/.ssh/id_deploy ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          DEST='${{ secrets.DEPLOY_PATH }}'
-          # If your GHCR packages are private, add a `docker login ghcr.io` here
-          # (e.g. with a GHCR_TOKEN secret) before the pull.
-          $SSH "cd '$DEST' && docker compose pull && docker compose up -d"
+          # If your GHCR packages are private, add `docker login ghcr.io` here
+          # (e.g. a GHCR_TOKEN secret) before the pull.
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "cd '$DEPLOY_PATH' && docker compose pull && docker compose up -d"
