@@ -1,0 +1,10 @@
+# Local config + pipeline artifacts
+.env
+*.tar.gz
+patch-output/
+
+# fiesta build output (regenerated each run)
+content/build/
+
+# SQL bind-mount data if used locally
+sql-data/
