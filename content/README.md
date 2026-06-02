@@ -18,7 +18,7 @@ Create one with the toolkit (from ik-fiesta-collab):
 
 ```bash
 fiesta init content
-fiesta import      # import your ServerSource/ClientSource into JSON
+fiesta import      # import your server files/ClientSource into JSON
 ```
 
 **No copyrighted game data is committed here by this repo** — the JSON tables you
