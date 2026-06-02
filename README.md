@@ -43,7 +43,10 @@ exes/DBs.
    `Databases/*.bak`, `GamigoZR/`), and make sure the GHCR images are pullable
    (public, or `docker login ghcr.io` — see the workflow's deploy step).
 3. Set the **secrets** and **variables** below in the repo settings.
-4. Run the **build-and-deploy** workflow (push to `main`, or "Run workflow").
+4. Run the **build-and-deploy** workflow manually from the **Actions** tab
+   ("Run workflow"). It's manual on purpose — a fresh clone has an empty
+   `content/`, so auto-running on push would just fail. Add a `push:` trigger
+   yourself once your content lives here and you want CD.
 
 For a local dry run without CI: `cp .env.example .env`, edit it, build your
 content with `fiesta build`, drop the output into your `server files/9Data`, then
