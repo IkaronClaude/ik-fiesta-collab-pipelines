@@ -14,7 +14,7 @@ content/ (JSON tables)  --fiesta build-->  SHN/txt  --scp-->  host ServerSource/
 ```
 
 It ties the whole ecosystem together — the BYO game runtime + SQL + proxy from
-[fiesta-docker](https://github.com/IkaronClaude/fiesta-docker), plus
+[ik-fiesta-docker](https://github.com/IkaronClaude/ik-fiesta-docker), plus
 [ik-fiesta-api](https://github.com/IkaronClaude/ik-fiesta-api),
 [ik-fiesta-sample-webapp](https://github.com/IkaronClaude/ik-fiesta-sample-webapp),
 and [ik-fiesta-patch-server](https://github.com/IkaronClaude/ik-fiesta-patch-server).
